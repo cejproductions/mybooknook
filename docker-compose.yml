@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: booknook
+      POSTGRES_PASSWORD: booknook
+      POSTGRES_DB: mybooknook
+    ports:
+      - "5432:5432"
+    volumes:
+      - booknook_data:/var/lib/postgresql/data
+volumes:
+  booknook_data:
