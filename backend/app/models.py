@@ -7,7 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
     Integer,
-    UniqueConstraint,
+    Boolean,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -118,29 +118,65 @@ class CatalogItem(Base):
         primary_key=True,
         default=lambda: str(uuid.uuid4()),
     )
-    kind: Mapped[str] = mapped_column(String(10), index=True)
-    title: Mapped[str] = mapped_column(String(300))
-    creator: Mapped[str] = mapped_column(String(300), default="")
+
+    kind: Mapped[str] = mapped_column(
+        String(10),
+        index=True,
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(300),
+        index=True,
+    )
+
+    creator: Mapped[str] = mapped_column(
+        String(300),
+        default="",
+    )
+
     identifier: Mapped[str | None] = mapped_column(
-        String(32),
+        String(64),
         nullable=True,
         index=True,
     )
-    cover_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    year: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    description: Mapped[str] = mapped_column(Text, default="")
 
+    cover_url: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    year: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    description: Mapped[str] = mapped_column(
+        Text,
+        default="",
+    )
+
+    edition: Mapped[str | None] = mapped_column(
+        String(150),
+        nullable=True,
+    )
+
+    publisher_label: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+    )
+
+    catalog_number: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    special_edition: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
 
 class CollectionEntry(Base):
     __tablename__ = "collection_entries"
-
-    __table_args__ = (
-        UniqueConstraint(
-            "user_id",
-            "item_id",
-            name="uq_user_item",
-        ),
-    )
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -154,7 +190,7 @@ class CollectionEntry(Base):
     )
 
     item_id: Mapped[str] = mapped_column(
-        ForeignKey("catalog_items.id"),
+        ForeignKey("catalog_items.id", ondelete="CASCADE"),
         index=True,
     )
 
@@ -168,11 +204,28 @@ class CollectionEntry(Base):
         default="private",
     )
 
+    reading_status: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
+    personal_notes: Mapped[str] = mapped_column(
+        Text,
+        default="",
+    )
+
+    acquired_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    # Temporary until Migration 2B.
     rating: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
     )
 
+    # Temporary until Migration 2B.
     review: Mapped[str] = mapped_column(
         Text,
         default="",
@@ -183,4 +236,10 @@ class CollectionEntry(Base):
         default=utcnow,
     )
 
-    item: Mapped[CatalogItem] = relationship()
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+    )
+
+    item: Mapped["CatalogItem"] = relationship()
