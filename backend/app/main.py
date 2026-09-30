@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 from .config import settings
-from .database import Base, engine, get_db
+from .database import get_db
 from .models import User, CatalogItem, CollectionEntry
 from .schemas import RegisterIn, LoginIn, UserOut, TokenOut, EntryIn, EntryOut, EntryPatch
 from .security import hasher, make_token, current_user
@@ -13,10 +13,7 @@ app = FastAPI(title="MyBookNook API", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin],
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-@app.on_event("startup")
-def create_tables_for_dev():
-    # Development bootstrap only; replace with Alembic migrations before production.
-    Base.metadata.create_all(bind=engine)
+
 
 @app.get("/health")
 def health():
