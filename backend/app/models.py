@@ -8,6 +8,8 @@ from sqlalchemy import (
     DateTime,
     Integer,
     Boolean,
+    CheckConstraint,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -219,18 +221,6 @@ class CollectionEntry(Base):
         nullable=True,
     )
 
-    # Temporary until Migration 2B.
-    rating: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-    )
-
-    # Temporary until Migration 2B.
-    review: Mapped[str] = mapped_column(
-        Text,
-        default="",
-    )
-
     added_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utcnow,
@@ -243,3 +233,93 @@ class CollectionEntry(Base):
     )
 
     item: Mapped["CatalogItem"] = relationship()
+
+class Rating(Base):
+    __tablename__ = "ratings"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "item_id",
+            name="uq_rating_user_item",
+        ),
+        CheckConstraint(
+            "value >= 1 AND value <= 10",
+            name="ck_rating_value_range",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
+
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("catalog_items.id", ondelete="CASCADE"),
+        index=True,
+    )
+
+    value: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+    )
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "item_id",
+            name="uq_review_user_item",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
+
+    item_id: Mapped[str] = mapped_column(
+        ForeignKey("catalog_items.id", ondelete="CASCADE"),
+        index=True,
+    )
+
+    body: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+    )
