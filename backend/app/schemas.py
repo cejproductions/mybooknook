@@ -77,6 +77,7 @@ class UserOut(BaseModel):
 
     id: str
     username: str
+    email: EmailStr
     profile: ProfileOut
 
 

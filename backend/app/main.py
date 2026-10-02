@@ -166,7 +166,6 @@ def update_profile(
 
     updates = data.model_dump(
         exclude_unset=True,
-        exclude_none=True,
     )
 
     for key, value in updates.items():

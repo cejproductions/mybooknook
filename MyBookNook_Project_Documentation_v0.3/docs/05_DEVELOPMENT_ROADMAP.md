@@ -41,25 +41,40 @@ Current migration head:
 
 ## Phase 2 - Profile Settings
 
-Status: **Next**
+Status: **Core settings complete; photo upload and notification preferences pending**
 
-Planned:
+Completed:
 
--   Avatar/profile menu
--   Profile Settings view
--   Display name
--   Bio
--   Profile photo upload/preview
--   Initials fallback
--   Profile visibility
+-   Avatar/profile settings entry points
+-   Profile Settings interface
+-   Display name editing
+-   Bio editing
+-   Initials avatar fallback
+-   Existing profile-photo URL display support
+-   Read-only username and email presentation
+-   Profile visibility default
 -   Book visibility default
 -   Vinyl visibility default
--   Account information
 -   Save/cancel UX
--   Notification-preference foundation where appropriate
+-   Persistent profile updates
+-   New book/vinyl entries inherit the corresponding visibility default
+-   Individual entries can override the default
+-   Existing entries are not rewritten when defaults change
 
-Exit condition: authenticated users can manage a persistent profile
-through the UI.
+Deferred within v1:
+
+-   Profile-photo upload/storage
+-   Notification-preference controls
+-   Dedicated username-change workflow
+-   Dedicated email-change/verification workflow
+
+During this phase, item-detail save behavior was also corrected so
+rating and review resources remain optional and are only changed when
+the user actually modifies them. Unrelated privacy, reading-status,
+notes, or acquired-date edits no longer require or delete a review.
+
+Exit condition achieved for the core phase: authenticated users can
+manage and persist their profile through the UI.
 
 ## Phase 3 - Catalog Model and Metadata
 

@@ -47,17 +47,26 @@ Production authentication/session hardening remains pre-launch work.
 The backend now has a dedicated `UserProfile` model separate from
 account credentials.
 
-Current profile foundation includes:
+Current profile functionality includes:
 
--   Display name
--   Bio
--   Profile photo URL field
--   Profile visibility
+-   Profile Settings interface accessible from the account/avatar controls
+-   Editable display name
+-   Editable bio
+-   Read-only username and email display
+-   Initials avatar fallback
+-   Existing profile-photo URL display support
+-   Profile visibility default
 -   Books visibility default
 -   Vinyl visibility default
--   Profile update API
+-   Persistent profile update API
+-   Save/cancel workflow
+-   Immediate UI refresh after profile changes
 
-The complete Profile Settings frontend is the next major feature phase.
+Book and vinyl visibility settings act as defaults for newly added
+collection entries. Individual entries may override those defaults, and
+changing a profile default does not rewrite existing collection entries.
+
+Profile-photo upload remains pending object-storage infrastructure.
 
 ## Catalog and Collection
 
@@ -174,7 +183,8 @@ Implemented:
 -   Book reading-status controls
 -   Vinyl-specific behavior
 -   Edition and release metadata
--   Rating/review editing
+-   Optional rating/review editing
+-   Profile Settings and privacy-default controls
 -   Existing MyBookNook branding and user-authored site copy
 
 ## Database Migration State
@@ -222,12 +232,16 @@ The synchronized build was manually verified for:
 -   Protection of personal notes and acquired dates
 -   Individual collection-entry deletion
 -   Browser-refresh persistence
+-   Profile Settings persistence after refresh
+-   Book/vinyl privacy defaults applied to new entries
+-   Existing entry privacy unaffected by default changes
+-   Rating/review fields remain optional during unrelated item edits
+-   Existing reviews survive unrelated collection-entry edits
 
 ## Not Yet Implemented
 
 Major remaining v1 work includes:
 
--   Complete Profile Settings UI
 -   Profile-photo object storage/upload
 -   External metadata providers
 -   Barcode scanning

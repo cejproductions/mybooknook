@@ -140,6 +140,19 @@ button:disabled {
   font-size: 14px;
   color: #74583b;
   font-weight: 700;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.avatar-button {
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatar-button:hover {
+  box-shadow: 0 0 0 3px #eef1ed;
 }
 
 .avatar-small {
@@ -1478,6 +1491,87 @@ button:disabled {
 
   .detail-actions .primary-btn,
   .detail-actions .delete-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* =========================================================
+   Profile settings
+   ========================================================= */
+
+.profile-settings-modal {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.profile-settings-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0 18px;
+  border-bottom: 1px solid #eceee9;
+}
+
+.profile-settings-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 21px;
+}
+
+.profile-settings-identity > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.profile-settings-identity strong {
+  font-size: 16px;
+}
+
+.profile-settings-identity span {
+  color: #7f8881;
+  font-size: 12px;
+}
+
+.profile-settings-identity small,
+.settings-help {
+  color: #8c948e;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.profile-privacy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.read-only-input {
+  background: #f4f5f2 !important;
+  color: #7c847e !important;
+  cursor: default;
+}
+
+.profile-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+@media (max-width: 680px) {
+  .profile-privacy-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-settings-actions {
+    flex-direction: column-reverse;
+  }
+
+  .profile-settings-actions button {
     width: 100%;
     justify-content: center;
   }

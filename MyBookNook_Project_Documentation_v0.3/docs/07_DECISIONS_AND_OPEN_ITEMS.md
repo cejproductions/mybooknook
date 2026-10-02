@@ -52,6 +52,18 @@ Decision: **resolved**
 -   Lending will belong to a specific collection entry.
 -   Custom shelves/tags remain part of v1.
 
+### Profile Settings and Visibility Defaults
+
+Decision: **core behavior resolved**
+
+-   Display name and bio are editable through Profile Settings.
+-   Username and email are read-only until dedicated account workflows exist.
+-   Initials are used when no profile photo is available.
+-   Profile-photo upload waits for object-storage infrastructure.
+-   Book and vinyl visibility settings are defaults for newly added entries.
+-   Existing collection entries are not bulk-modified when defaults change.
+-   Per-entry visibility can override the user's default.
+
 ### Ratings and Reviews
 
 Decision: **resolved**
@@ -63,6 +75,7 @@ Decision: **resolved**
 -   API/UI use 0.5-5.0 star values.
 -   Ratings/reviews are public.
 -   Personal notes are separate and private.
+-   Ratings and reviews are optional; unrelated collection-entry edits do not create, delete, or require them.
 
 ### Privacy
 
@@ -176,7 +189,8 @@ Do not introduce cached aggregates until there is a demonstrated need.
 
 ## Verified Architecture Notes
 
-The October 1, 2026 post-migration test confirmed:
+The October 1, 2026 post-migration test and October 2 Profile Settings
+checkpoint confirmed:
 
 -   Multiple copies work.
 -   Shared ratings/reviews across copies work.
@@ -186,6 +200,10 @@ The October 1, 2026 post-migration test confirmed:
 -   Different vinyl editions display correctly.
 -   Deleting one collection copy does not prevent the remaining copy
     from functioning.
+-   Profile Settings persist after browser refresh.
+-   New books and vinyl inherit their configured visibility defaults.
+-   Existing entries remain unchanged when profile defaults change.
+-   Ratings/reviews remain optional during unrelated item edits.
 
 ## Scope-Control Rule
 

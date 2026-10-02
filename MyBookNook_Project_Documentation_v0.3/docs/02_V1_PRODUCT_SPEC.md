@@ -22,8 +22,11 @@ v1 users should be able to:
 -   Sign out.
 -   Delete their account/data through a production-safe workflow.
 
-The backend profile foundation already exists; the full settings
-interface remains to be built.
+The Profile Settings interface is implemented for display name, bio,
+initials/avatar presentation, account information, and profile/book/vinyl
+visibility defaults. Username and email are currently read-only. Profile
+photo upload remains pending object-storage infrastructure, and
+notification preferences remain a later v1 phase.
 
 ## 2. Shared Catalog
 

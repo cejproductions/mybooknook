@@ -19,6 +19,7 @@ import {
   Plus,
   ScanLine,
   Search,
+  Settings,
   Star,
   Trash2,
   Users,
@@ -126,7 +127,20 @@ function App() {
     useState<number | null>(null);
 
   const [selectedReview, setSelectedReview] = useState('');
+  const [originalRating, setOriginalRating] =
+    useState<number | null>(null);
+  const [originalReview, setOriginalReview] = useState('');
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileDisplayName, setProfileDisplayName] = useState('');
+  const [profileBio, setProfileBio] = useState('');
+  const [profileVisibility, setProfileVisibility] =
+    useState<Visibility>('public');
+  const [booksVisibility, setBooksVisibility] =
+    useState<Visibility>('private');
+  const [vinylVisibility, setVinylVisibility] =
+    useState<Visibility>('private');
 
 
   async function refresh(t: string) {
@@ -151,6 +165,61 @@ function App() {
       setUser(null);
     });
   }, [token]);
+
+
+  function openProfileSettings() {
+    if (!user) {
+      return;
+    }
+
+    setProfileDisplayName(user.profile.display_name);
+    setProfileBio(user.profile.bio);
+    setProfileVisibility(user.profile.profile_visibility);
+    setBooksVisibility(user.profile.books_visibility);
+    setVinylVisibility(user.profile.vinyl_visibility);
+    setError('');
+    setProfileOpen(true);
+  }
+
+
+  async function saveProfile(event: FormEvent) {
+    event.preventDefault();
+
+    if (!token || !user) {
+      return;
+    }
+
+    setBusy(true);
+    setError('');
+
+    try {
+      const updated = await request<User>(
+        '/users/me/profile',
+        token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            display_name: profileDisplayName.trim(),
+            bio: profileBio.trim(),
+            profile_visibility: profileVisibility,
+            books_visibility: booksVisibility,
+            vinyl_visibility: vinylVisibility,
+          }),
+        },
+      );
+
+      setUser(updated);
+      setProfileOpen(false);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not save profile settings.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
 
   function logout() {
@@ -204,8 +273,13 @@ function App() {
       kind,
     });
 
+    const defaultVisibility =
+      kind === 'book'
+        ? user?.profile.books_visibility ?? 'private'
+        : user?.profile.vinyl_visibility ?? 'private';
+
     setStatus('owned');
-    setVisibility('private');
+    setVisibility(defaultVisibility);
     setReadingStatus(null);
     setPersonalNotes('');
     setAcquiredAt('');
@@ -371,6 +445,8 @@ function App() {
     setSelected(entry);
     setSelectedRating(null);
     setSelectedReview('');
+    setOriginalRating(null);
+    setOriginalReview('');
     setError('');
 
     if (isPublic || !token) {
@@ -394,10 +470,12 @@ function App() {
 
       if (ratingResult.status === 'fulfilled') {
         setSelectedRating(ratingResult.value.stars);
+        setOriginalRating(ratingResult.value.stars);
       }
 
       if (reviewResult.status === 'fulfilled') {
         setSelectedReview(reviewResult.value.body);
+        setOriginalReview(reviewResult.value.body);
       }
     } finally {
       setDetailLoading(false);
@@ -406,40 +484,45 @@ function App() {
 
 
   async function saveRating() {
-    if (!token || !selected || view === 'public') {
+    if (
+      !token ||
+      !selected ||
+      view === 'public' ||
+      selectedRating === originalRating
+    ) {
       return;
     }
 
-    setBusy(true);
-    setError('');
-
-    try {
-      if (selectedRating === null) {
-        await request<void>(
-          `/catalog/${selected.item.id}/rating`,
-          token,
-          {
-            method: 'DELETE',
-          },
-        );
-      } else {
-        await request<Rating>(
-          `/catalog/${selected.item.id}/rating`,
-          token,
-          {
-            method: 'PUT',
-            body: JSON.stringify({
-              stars: selectedRating,
-            }),
-          },
-        );
+    if (selectedRating === null) {
+      if (originalRating === null) {
+        return;
       }
-    } catch (err) {
-      setError((err as Error).message);
-      throw err;
-    } finally {
-      setBusy(false);
+
+      await request<void>(
+        `/catalog/${selected.item.id}/rating`,
+        token,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      setOriginalRating(null);
+      return;
     }
+
+    const result = await request<Rating>(
+      `/catalog/${selected.item.id}/rating`,
+      token,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          stars: selectedRating,
+        }),
+      },
+    );
+
+    setSelectedRating(result.stars);
+    setOriginalRating(result.stars);
   }
 
 
@@ -448,42 +531,44 @@ function App() {
       return;
     }
 
-    setBusy(true);
-    setError('');
+    const body = selectedReview.trim();
+    const originalBody = originalReview.trim();
 
-    try {
-      const body = selectedReview.trim();
-
-      if (!body) {
-        await request<void>(
-          `/catalog/${selected.item.id}/review`,
-          token,
-          {
-            method: 'DELETE',
-          },
-        );
-
-        setSelectedReview('');
-      } else {
-        const result = await request<Review>(
-          `/catalog/${selected.item.id}/review`,
-          token,
-          {
-            method: 'PUT',
-            body: JSON.stringify({
-              body,
-            }),
-          },
-        );
-
-        setSelectedReview(result.body);
-      }
-    } catch (err) {
-      setError((err as Error).message);
-      throw err;
-    } finally {
-      setBusy(false);
+    if (body === originalBody) {
+      return;
     }
+
+    if (!body) {
+      if (!originalBody) {
+        return;
+      }
+
+      await request<void>(
+        `/catalog/${selected.item.id}/review`,
+        token,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      setSelectedReview('');
+      setOriginalReview('');
+      return;
+    }
+
+    const result = await request<Review>(
+      `/catalog/${selected.item.id}/review`,
+      token,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          body,
+        }),
+      },
+    );
+
+    setSelectedReview(result.body);
+    setOriginalReview(result.body);
   }
 
 
@@ -530,8 +615,12 @@ function App() {
       }
 
       setSelected(null);
-    } catch {
-      // Individual request functions already set the error message.
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not save item changes.',
+      );
     } finally {
       setBusy(false);
     }
@@ -649,14 +738,24 @@ function App() {
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="avatar">
-            {user?.profile.display_name
-              ?.slice(0, 1)
-              .toUpperCase() ||
-              user?.username
-                .slice(0, 1)
+          <div
+            className="avatar"
+            style={
+              user?.profile.profile_photo_url
+                ? {
+                    backgroundImage: `url(${user.profile.profile_photo_url})`,
+                  }
+                : undefined
+            }
+          >
+            {!user?.profile.profile_photo_url &&
+              (user?.profile.display_name
+                ?.slice(0, 1)
                 .toUpperCase() ||
-              'U'}
+                user?.username
+                  .slice(0, 1)
+                  .toUpperCase() ||
+                'U')}
           </div>
 
           <div className="account">
@@ -667,6 +766,15 @@ function App() {
 
             <span>@{user?.username}</span>
           </div>
+
+          <button
+            className="icon-button"
+            title="Profile settings"
+            aria-label="Open profile settings"
+            onClick={openProfileSettings}
+          >
+            <Settings size={18} />
+          </button>
 
           <button
             className="icon-button"
@@ -708,14 +816,28 @@ function App() {
               Your space, your NOOK
             </span>
 
-            <div className="avatar avatar-small">
-              {user?.profile.display_name
-                ?.slice(0, 1)
-                .toUpperCase() ||
-                user?.username
-                  .slice(0, 1)
-                  .toUpperCase()}
-            </div>
+            <button
+              className="avatar avatar-small avatar-button"
+              type="button"
+              title="Profile settings"
+              aria-label="Open profile settings"
+              onClick={openProfileSettings}
+              style={
+                user?.profile.profile_photo_url
+                  ? {
+                      backgroundImage: `url(${user.profile.profile_photo_url})`,
+                    }
+                  : undefined
+              }
+            >
+              {!user?.profile.profile_photo_url &&
+                (user?.profile.display_name
+                  ?.slice(0, 1)
+                  .toUpperCase() ||
+                  user?.username
+                    .slice(0, 1)
+                    .toUpperCase())}
+            </button>
           </div>
         </header>
 
@@ -1041,6 +1163,225 @@ function App() {
           </section>
         </div>
       </main>
+
+      {profileOpen && user && (
+        <div
+          className="modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !busy) {
+              setProfileOpen(false);
+              setError('');
+            }
+          }}
+        >
+          <form
+            className="modal profile-settings-modal"
+            onSubmit={saveProfile}
+          >
+            <div className="modal-header">
+              <div>
+                <div className="eyebrow">ACCOUNT</div>
+                <h2>Profile settings</h2>
+              </div>
+
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Close profile settings"
+                disabled={busy}
+                onClick={() => {
+                  setProfileOpen(false);
+                  setError('');
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="profile-settings-identity">
+              <div
+                className="avatar profile-settings-avatar"
+                style={
+                  user.profile.profile_photo_url
+                    ? {
+                        backgroundImage: `url(${user.profile.profile_photo_url})`,
+                      }
+                    : undefined
+                }
+              >
+                {!user.profile.profile_photo_url &&
+                  (profileDisplayName
+                    .slice(0, 1)
+                    .toUpperCase() ||
+                    user.username
+                      .slice(0, 1)
+                      .toUpperCase())}
+              </div>
+
+              <div>
+                <strong>
+                  {profileDisplayName || user.username}
+                </strong>
+                <span>@{user.username}</span>
+                <small>
+                  Profile photo uploads will be added with object storage.
+                </small>
+              </div>
+            </div>
+
+            <div className="detail-section">
+              <div className="detail-section-heading">
+                Profile
+              </div>
+
+              <label>
+                Display name
+                <input
+                  maxLength={100}
+                  value={profileDisplayName}
+                  onChange={(event) =>
+                    setProfileDisplayName(event.target.value)
+                  }
+                  placeholder={user.username}
+                />
+              </label>
+
+              <label>
+                Username
+                <input
+                  value={`@${user.username}`}
+                  readOnly
+                  className="read-only-input"
+                />
+              </label>
+
+              <label>
+                Bio
+                <textarea
+                  rows={4}
+                  maxLength={5000}
+                  value={profileBio}
+                  onChange={(event) =>
+                    setProfileBio(event.target.value)
+                  }
+                  placeholder="Tell other collectors a little about yourself."
+                />
+              </label>
+            </div>
+
+            <div className="detail-section">
+              <div className="detail-section-heading">
+                Privacy defaults
+              </div>
+
+              <p className="settings-help">
+                These are your defaults going forward. Existing item
+                visibility is not changed.
+              </p>
+
+              <div className="profile-privacy-grid">
+                <label>
+                  Profile
+                  <select
+                    value={profileVisibility}
+                    onChange={(event) =>
+                      setProfileVisibility(
+                        event.target.value as Visibility,
+                      )
+                    }
+                  >
+                    <option value="public">Public</option>
+                    <option value="friends">Friends</option>
+                    <option value="private">Private</option>
+                  </select>
+                </label>
+
+                <label>
+                  Books
+                  <select
+                    value={booksVisibility}
+                    onChange={(event) =>
+                      setBooksVisibility(
+                        event.target.value as Visibility,
+                      )
+                    }
+                  >
+                    <option value="public">Public</option>
+                    <option value="friends">Friends</option>
+                    <option value="private">Private</option>
+                  </select>
+                </label>
+
+                <label>
+                  Vinyl
+                  <select
+                    value={vinylVisibility}
+                    onChange={(event) =>
+                      setVinylVisibility(
+                        event.target.value as Visibility,
+                      )
+                    }
+                  >
+                    <option value="public">Public</option>
+                    <option value="friends">Friends</option>
+                    <option value="private">Private</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="detail-section">
+              <div className="detail-section-heading">
+                Account
+              </div>
+
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={user.email}
+                  readOnly
+                  className="read-only-input"
+                />
+              </label>
+
+              <p className="settings-help">
+                Username and email changes will use dedicated account
+                workflows in a later phase.
+              </p>
+            </div>
+
+            {error && (
+              <div className="error-banner" role="alert">
+                {error}
+              </div>
+            )}
+
+            <div className="profile-settings-actions">
+              <button
+                className="secondary-btn"
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setProfileOpen(false);
+                  setError('');
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="primary-btn"
+                type="submit"
+                disabled={busy}
+              >
+                {busy ? 'Saving...' : 'Save changes'}
+                <Check size={17} />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {addOpen && (
         <div
