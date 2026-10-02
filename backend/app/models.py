@@ -2,13 +2,13 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    String,
-    Text,
-    ForeignKey,
-    DateTime,
-    Integer,
     Boolean,
     CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,9 +16,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
 
-def utcnow():
+def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
+
+# ---------------------------------------------------------
+# Users
+# ---------------------------------------------------------
 
 class User(Base):
     __tablename__ = "users"
@@ -28,17 +32,23 @@ class User(Base):
         primary_key=True,
         default=lambda: str(uuid.uuid4()),
     )
+
     username: Mapped[str] = mapped_column(
         String(40),
         unique=True,
         index=True,
     )
+
     email: Mapped[str] = mapped_column(
         String(255),
         unique=True,
         index=True,
     )
-    password_hash: Mapped[str] = mapped_column(String(255))
+
+    password_hash: Mapped[str] = mapped_column(
+        String(255),
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utcnow,
@@ -50,6 +60,25 @@ class User(Base):
         uselist=False,
     )
 
+    collection_entries: Mapped[list["CollectionEntry"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    ratings: Mapped[list["Rating"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    reviews: Mapped[list["Review"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+
+# ---------------------------------------------------------
+# User profiles
+# ---------------------------------------------------------
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
@@ -111,6 +140,10 @@ class UserProfile(Base):
         back_populates="profile",
     )
 
+
+# ---------------------------------------------------------
+# Catalog
+# ---------------------------------------------------------
 
 class CatalogItem(Base):
     __tablename__ = "catalog_items"
@@ -177,6 +210,23 @@ class CatalogItem(Base):
         default=False,
     )
 
+    collection_entries: Mapped[list["CollectionEntry"]] = relationship(
+        back_populates="item",
+    )
+
+    ratings: Mapped[list["Rating"]] = relationship(
+        back_populates="item",
+    )
+
+    reviews: Mapped[list["Review"]] = relationship(
+        back_populates="item",
+    )
+
+
+# ---------------------------------------------------------
+# Collection entries
+# ---------------------------------------------------------
+
 class CollectionEntry(Base):
     __tablename__ = "collection_entries"
 
@@ -232,7 +282,18 @@ class CollectionEntry(Base):
         onupdate=utcnow,
     )
 
-    item: Mapped["CatalogItem"] = relationship()
+    user: Mapped["User"] = relationship(
+        back_populates="collection_entries",
+    )
+
+    item: Mapped["CatalogItem"] = relationship(
+        back_populates="collection_entries",
+    )
+
+
+# ---------------------------------------------------------
+# Ratings
+# ---------------------------------------------------------
 
 class Rating(Base):
     __tablename__ = "ratings"
@@ -267,7 +328,6 @@ class Rating(Base):
 
     value: Mapped[int] = mapped_column(
         Integer,
-        nullable=False,
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -280,6 +340,19 @@ class Rating(Base):
         default=utcnow,
         onupdate=utcnow,
     )
+
+    user: Mapped["User"] = relationship(
+        back_populates="ratings",
+    )
+
+    item: Mapped["CatalogItem"] = relationship(
+        back_populates="ratings",
+    )
+
+
+# ---------------------------------------------------------
+# Reviews
+# ---------------------------------------------------------
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -310,7 +383,6 @@ class Review(Base):
 
     body: Mapped[str] = mapped_column(
         Text,
-        nullable=False,
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -322,4 +394,12 @@ class Review(Base):
         DateTime(timezone=True),
         default=utcnow,
         onupdate=utcnow,
+    )
+
+    user: Mapped["User"] = relationship(
+        back_populates="reviews",
+    )
+
+    item: Mapped["CatalogItem"] = relationship(
+        back_populates="reviews",
     )
