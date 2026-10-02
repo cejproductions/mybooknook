@@ -54,7 +54,11 @@ Current profile functionality includes:
 -   Editable bio
 -   Read-only username and email display
 -   Initials avatar fallback
--   Existing profile-photo URL display support
+-   Profile-photo upload, replacement, removal, and persistence
+-   JPEG, PNG, and WebP upload support with a 5 MB limit
+-   Server-side image decoding, normalization, resizing, and WebP re-encoding
+-   Generated storage filenames rather than trusted client filenames
+-   Initials fallback after profile-photo removal
 -   Profile visibility default
 -   Books visibility default
 -   Vinyl visibility default
@@ -66,7 +70,7 @@ Book and vinyl visibility settings act as defaults for newly added
 collection entries. Individual entries may override those defaults, and
 changing a profile default does not rewrite existing collection entries.
 
-Profile-photo upload remains pending object-storage infrastructure.
+Profile photos currently use local development storage under `backend/uploads/profile_photos/`. The upload directory is excluded from Git. Production deployment will replace the local provider with object storage while retaining the same profile-photo service/API boundary.
 
 ## Catalog and Collection
 
@@ -185,6 +189,7 @@ Implemented:
 -   Edition and release metadata
 -   Optional rating/review editing
 -   Profile Settings and privacy-default controls
+-   Profile-photo choose/replace/remove controls
 -   Existing MyBookNook branding and user-authored site copy
 
 ## Database Migration State
@@ -236,13 +241,17 @@ The synchronized build was manually verified for:
 -   Book/vinyl privacy defaults applied to new entries
 -   Existing entry privacy unaffected by default changes
 -   Rating/review fields remain optional during unrelated item edits
+-   Profile-photo upload/display persistence
+-   Profile-photo replacement and removal
+-   Initials fallback after photo removal
+-   User-upload directory exclusion from Git
 -   Existing reviews survive unrelated collection-entry edits
 
 ## Not Yet Implemented
 
 Major remaining v1 work includes:
 
--   Profile-photo object storage/upload
+-   Production object storage for profile photos/uploads
 -   External metadata providers
 -   Barcode scanning
 -   Custom shelves/tags

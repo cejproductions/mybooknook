@@ -1,5 +1,6 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -30,6 +31,7 @@ from .schemas import (
     UserOut,
 )
 from .security import current_user, hasher, make_token
+from .services.profile_photos import UPLOAD_ROOT, profile_photo_storage
 
 
 app = FastAPI(
@@ -44,6 +46,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+
+UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory=UPLOAD_ROOT),
+    name="uploads",
 )
 
 
@@ -173,6 +184,74 @@ def update_profile(
 
     db.commit()
     db.refresh(user)
+
+    return user
+
+
+@app.post(
+    "/users/me/profile-photo",
+    response_model=UserOut,
+)
+async def upload_profile_photo(
+    photo: UploadFile = File(...),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    if user.profile is None:
+        user.profile = UserProfile(
+            display_name=user.username,
+            bio="",
+            profile_visibility="public",
+            books_visibility="private",
+            vinyl_visibility="private",
+        )
+
+    old_photo_url = user.profile.profile_photo_url
+    new_photo_url = await profile_photo_storage.save(
+        photo,
+        user.id,
+    )
+
+    user.profile.profile_photo_url = new_photo_url
+
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception:
+        db.rollback()
+        profile_photo_storage.delete(new_photo_url)
+        raise
+
+    if old_photo_url != new_photo_url:
+        profile_photo_storage.delete(old_photo_url)
+
+    return user
+
+
+@app.delete(
+    "/users/me/profile-photo",
+    response_model=UserOut,
+)
+def delete_profile_photo(
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    if user.profile is None:
+        user.profile = UserProfile(
+            display_name=user.username,
+            bio="",
+            profile_visibility="public",
+            books_visibility="private",
+            vinyl_visibility="private",
+        )
+
+    old_photo_url = user.profile.profile_photo_url
+    user.profile.profile_photo_url = None
+
+    db.commit()
+    db.refresh(user)
+
+    profile_photo_storage.delete(old_photo_url)
 
     return user
 

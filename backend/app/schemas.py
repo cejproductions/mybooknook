@@ -65,7 +65,6 @@ class ProfilePatch(BaseModel):
         max_length=5000,
     )
 
-    profile_photo_url: str | None = None
 
     profile_visibility: Visibility | None = None
     books_visibility: Visibility | None = None

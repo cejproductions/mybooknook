@@ -1,7 +1,7 @@
 # MyBookNook Project Documentation
 
 **Documentation snapshot:** v0.3\
-**Status:** Profile Settings checkpoint verified October 2, 2026.
+**Status:** Profile Photos Phase 2B verified October 2, 2026.
 
 MyBookNook is a web-first personal and social collection platform for
 books and vinyl records. The current application uses a React/TypeScript

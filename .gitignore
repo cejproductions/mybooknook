@@ -21,3 +21,5 @@ Thumbs.db
 
 # TypeScript build cache
 *.tsbuildinfo
+# User uploads (development storage)
+backend/uploads/

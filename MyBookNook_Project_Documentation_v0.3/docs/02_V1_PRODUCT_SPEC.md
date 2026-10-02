@@ -23,9 +23,11 @@ v1 users should be able to:
 -   Delete their account/data through a production-safe workflow.
 
 The Profile Settings interface is implemented for display name, bio,
-initials/avatar presentation, account information, and profile/book/vinyl
-visibility defaults. Username and email are currently read-only. Profile
-photo upload remains pending object-storage infrastructure, and
+account information, profile/book/vinyl visibility defaults, and profile
+photos. Users can choose, replace, and remove a JPEG, PNG, or WebP profile
+photo; initials remain the fallback. The development build stores uploads
+locally behind a storage-service boundary. Production object storage remains
+a deployment requirement. Username and email are currently read-only, and
 notification preferences remain a later v1 phase.
 
 ## 2. Shared Catalog

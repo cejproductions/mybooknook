@@ -1576,3 +1576,57 @@ button:disabled {
     justify-content: center;
   }
 }
+
+
+.profile-photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 7px;
+}
+
+.profile-photo-upload {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.profile-photo-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.text-danger-btn {
+  border: 0;
+  background: transparent;
+  color: #a2473f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 2px;
+}
+
+.text-danger-btn:hover {
+  text-decoration: underline;
+}
+
+.text-danger-btn:disabled,
+.profile-photo-upload:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 520px) {
+  .profile-settings-identity {
+    align-items: flex-start;
+  }
+
+  .profile-photo-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

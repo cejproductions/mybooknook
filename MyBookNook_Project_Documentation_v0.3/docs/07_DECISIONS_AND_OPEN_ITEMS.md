@@ -59,7 +59,10 @@ Decision: **core behavior resolved**
 -   Display name and bio are editable through Profile Settings.
 -   Username and email are read-only until dedicated account workflows exist.
 -   Initials are used when no profile photo is available.
--   Profile-photo upload waits for object-storage infrastructure.
+-   Profile photos use a dedicated upload/remove API and storage-service boundary.
+-   Local filesystem storage is used for development; production will use object storage.
+-   PostgreSQL stores the photo URL/reference rather than image binary data.
+-   Profile uploads accept validated JPEG/PNG/WebP files up to 5 MB and are normalized to WebP.
 -   Book and vinyl visibility settings are defaults for newly added entries.
 -   Existing collection entries are not bulk-modified when defaults change.
 -   Per-entry visibility can override the user's default.
@@ -204,6 +207,9 @@ checkpoint confirmed:
 -   New books and vinyl inherit their configured visibility defaults.
 -   Existing entries remain unchanged when profile defaults change.
 -   Ratings/reviews remain optional during unrelated item edits.
+-   Profile-photo upload, persistence, replacement, removal, and initials fallback work.
+-   User-upload files remain outside Git via `backend/uploads/` exclusion.
+-   Production object storage remains pending.
 
 ## Scope-Control Rule
 

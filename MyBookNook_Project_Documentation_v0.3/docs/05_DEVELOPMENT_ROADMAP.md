@@ -41,7 +41,7 @@ Current migration head:
 
 ## Phase 2 - Profile Settings
 
-Status: **Core settings complete; photo upload and notification preferences pending**
+Status: **Core settings and development profile-photo lifecycle complete; notification preferences and production object storage pending**
 
 Completed:
 
@@ -50,7 +50,6 @@ Completed:
 -   Display name editing
 -   Bio editing
 -   Initials avatar fallback
--   Existing profile-photo URL display support
 -   Read-only username and email presentation
 -   Profile visibility default
 -   Book visibility default
@@ -60,21 +59,34 @@ Completed:
 -   New book/vinyl entries inherit the corresponding visibility default
 -   Individual entries can override the default
 -   Existing entries are not rewritten when defaults change
+-   Profile-photo choose/upload
+-   Profile-photo replacement
+-   Profile-photo removal and initials fallback
+-   JPEG/PNG/WebP validation with 5 MB maximum
+-   Server-side image decoding, normalization, resize, and WebP re-encoding
+-   Generated storage filenames
+-   Local development storage behind a profile-photo service boundary
+-   User-upload directory excluded from Git
 
-Deferred within v1:
+Still required within v1/deployment:
 
--   Profile-photo upload/storage
+-   Replace local development photo storage with production object storage
 -   Notification-preference controls
--   Dedicated username-change workflow
--   Dedicated email-change/verification workflow
+-   Dedicated username-change workflow if included in v1
+-   Dedicated email-change/verification workflow if included in v1
 
-During this phase, item-detail save behavior was also corrected so
-rating and review resources remain optional and are only changed when
-the user actually modifies them. Unrelated privacy, reading-status,
-notes, or acquired-date edits no longer require or delete a review.
+During this phase, item-detail save behavior was also corrected so rating
+and review resources remain optional and are only changed when the user
+actually modifies them. Unrelated privacy, reading-status, notes, or
+acquired-date edits no longer require or delete a review.
 
-Exit condition achieved for the core phase: authenticated users can
-manage and persist their profile through the UI.
+Phase 2B was manually verified for upload, persistence across refresh,
+replacement, removal, initials fallback, Git exclusion of user uploads, and
+a successful TypeScript/Vite production build.
+
+Exit condition achieved for the local-development profile phase:
+authenticated users can manage their profile and profile photo through the UI.
+Production object storage remains a deployment-hardening requirement.
 
 ## Phase 3 - Catalog Model and Metadata
 

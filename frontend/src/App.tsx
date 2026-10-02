@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 
 import {
+  mediaUrl,
   request,
   type CollectionStatus,
   type Entry,
@@ -141,6 +142,7 @@ function App() {
     useState<Visibility>('private');
   const [vinylVisibility, setVinylVisibility] =
     useState<Visibility>('private');
+  const [profilePhotoBusy, setProfilePhotoBusy] = useState(false);
 
 
   async function refresh(t: string) {
@@ -179,6 +181,87 @@ function App() {
     setVinylVisibility(user.profile.vinyl_visibility);
     setError('');
     setProfileOpen(true);
+  }
+
+
+  async function uploadProfilePhoto(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const photo = event.target.files?.[0];
+
+    // Allow selecting the same file again after an error/removal.
+    event.target.value = '';
+
+    if (!photo || !token) {
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(photo.type)) {
+      setError('Profile photos must be JPEG, PNG, or WebP.');
+      return;
+    }
+
+    if (photo.size > 5 * 1024 * 1024) {
+      setError('Profile photos must be 5 MB or smaller.');
+      return;
+    }
+
+    setProfilePhotoBusy(true);
+    setError('');
+
+    try {
+      const form = new FormData();
+      form.append('photo', photo);
+
+      const updated = await request<User>(
+        '/users/me/profile-photo',
+        token,
+        {
+          method: 'POST',
+          body: form,
+        },
+      );
+
+      setUser(updated);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not upload profile photo.',
+      );
+    } finally {
+      setProfilePhotoBusy(false);
+    }
+  }
+
+
+  async function removeProfilePhoto() {
+    if (!token || !user?.profile.profile_photo_url) {
+      return;
+    }
+
+    setProfilePhotoBusy(true);
+    setError('');
+
+    try {
+      const updated = await request<User>(
+        '/users/me/profile-photo',
+        token,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      setUser(updated);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not remove profile photo.',
+      );
+    } finally {
+      setProfilePhotoBusy(false);
+    }
   }
 
 
@@ -743,7 +826,7 @@ function App() {
             style={
               user?.profile.profile_photo_url
                 ? {
-                    backgroundImage: `url(${user.profile.profile_photo_url})`,
+                    backgroundImage: `url(${mediaUrl(user.profile.profile_photo_url)})`,
                   }
                 : undefined
             }
@@ -825,7 +908,7 @@ function App() {
               style={
                 user?.profile.profile_photo_url
                   ? {
-                      backgroundImage: `url(${user.profile.profile_photo_url})`,
+                      backgroundImage: `url(${mediaUrl(user.profile.profile_photo_url)})`,
                     }
                   : undefined
               }
@@ -1204,7 +1287,7 @@ function App() {
                 style={
                   user.profile.profile_photo_url
                     ? {
-                        backgroundImage: `url(${user.profile.profile_photo_url})`,
+                        backgroundImage: `url(${mediaUrl(user.profile.profile_photo_url)})`,
                       }
                     : undefined
                 }
@@ -1223,8 +1306,35 @@ function App() {
                   {profileDisplayName || user.username}
                 </strong>
                 <span>@{user.username}</span>
+                <div className="profile-photo-actions">
+                  <label className="secondary-btn profile-photo-upload">
+                    {profilePhotoBusy
+                      ? 'Working...'
+                      : user.profile.profile_photo_url
+                        ? 'Replace photo'
+                        : 'Choose photo'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={profilePhotoBusy || busy}
+                      onChange={uploadProfilePhoto}
+                    />
+                  </label>
+
+                  {user.profile.profile_photo_url && (
+                    <button
+                      className="text-danger-btn"
+                      type="button"
+                      disabled={profilePhotoBusy || busy}
+                      onClick={removeProfilePhoto}
+                    >
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+
                 <small>
-                  Profile photo uploads will be added with object storage.
+                  JPEG, PNG, or WebP. Maximum 5 MB.
                 </small>
               </div>
             </div>

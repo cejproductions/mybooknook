@@ -84,11 +84,23 @@ export type Review = {
 export type ProfilePatch = {
   display_name?: string;
   bio?: string;
-  profile_photo_url?: string | null;
   profile_visibility?: Visibility;
   books_visibility?: Visibility;
   vinyl_visibility?: Visibility;
 };
+
+export function mediaUrl(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  return `${BASE}${value.startsWith('/') ? value : `/${value}`}`;
+}
+
 
 function formatApiError(detail: unknown, status: number): string {
   if (typeof detail === 'string') {
@@ -130,7 +142,9 @@ export async function request<T>(
     response = await fetch(`${BASE}${path}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.body instanceof FormData
+          ? {}
+          : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },

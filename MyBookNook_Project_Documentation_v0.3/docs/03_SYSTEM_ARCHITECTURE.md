@@ -21,7 +21,9 @@ FastAPI application
         |
         +---- Metadata provider services (planned)
         |
-        +---- Object storage (planned)
+        +---- Profile-photo storage service
+        |         +---- Local filesystem (development)
+        |         +---- Object storage (production planned)
         |
         +---- Notification/push services (planned)
 ```
@@ -55,7 +57,8 @@ Responsibilities:
 -   Book/vinyl workflows
 -   Form validation/interaction
 -   Public collection presentation
--   Future profile/friend/notification/PWA UI
+-   Profile settings and profile-photo UI
+-   Future friend/notification/PWA UI
 
 The frontend must not be relied upon as the security boundary for
 private information.
@@ -78,6 +81,7 @@ Responsibilities:
 -   Collection/catalog business logic
 -   Privacy enforcement
 -   Ratings/reviews
+-   Profile-photo validation/storage orchestration
 -   Database transactions
 -   Future metadata-provider abstraction
 -   Future notification/lending/friendship services
@@ -171,12 +175,34 @@ Render is the current preferred PaaS candidate for initial deployment.
 Railway is a reasonable alternative. AWS remains a possible later
 migration/scaling target rather than a launch requirement.
 
-## Object Storage
+## Profile Photo Storage
 
-Profile photos and future uploaded media should use object storage
-rather than PostgreSQL binary blobs.
+The development build implements profile photos through a dedicated storage
+service. Current flow:
 
-The database should store URLs/object keys and associated metadata.
+``` text
+React multipart upload
+        |
+        v
+FastAPI /users/me/profile-photo
+        |
+        v
+Profile Photo Storage Service
+        |
+        +--> backend/uploads/profile_photos/  (development)
+        |
+        +--> object storage                    (production planned)
+```
+
+The backend validates image content, enforces a 5 MB limit, accepts JPEG/PNG/WebP,
+normalizes and resizes images, re-encodes them as WebP, and generates server-side
+filenames. Replacing/removing a locally managed photo cleans up the prior object.
+`backend/uploads/` is excluded from Git.
+
+PostgreSQL stores only the profile-photo URL/reference, not image binary data.
+Production deployment should swap the local storage implementation for managed
+object storage without changing the frontend upload workflow or profile domain
+model.
 
 ## Metadata Service Boundary
 
